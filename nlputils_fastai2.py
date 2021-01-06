@@ -78,7 +78,7 @@ def clean_files(dest):
         f.write(text)
         f.close()
         
-def get_one_clean_file(dest,lang, nohtml=True,past_preprocess=True):
+def get_one_clean_file(dest,lang, nohtml=True,do_strip=False,onebigfile=False):
 
     fname = f'all_texts_{lang}wiki.txt'
     print("doing some regexp to demove wiki things" , flush=True)
@@ -92,17 +92,23 @@ def get_one_clean_file(dest,lang, nohtml=True,past_preprocess=True):
       print("Reading {}".format(l) , flush=True) 
       # open file and get content without first line which is the title
       with open(l,'r+') as f:
-          for line in f.readlines():
-              text = line
-              # get content without </doc> and delete empty line and whitespaces at the head and tail
-              if not past_preprocess:
-                if nohtml:
-                    text = text.strip()
-                else:
-                    text = doc_re.findall(text)[0].strip()
-              # concatenate text
-              all_texts += text
-              all_texts += "\n"
+          if onebigfile:
+            text = f.read()
+            text = text.strip()
+            all_texts += text 
+            all_texts += "\n"
+          else:
+            for line in f.readlines():
+                text = line
+                # get content without </doc> and delete empty line and whitespaces at the head and tail
+                if do_strip:
+                  if nohtml:
+                      text = text.strip()
+                  else:
+                      text = doc_re.findall(text)[0].strip()
+                # concatenate text
+                all_texts += text
+                all_texts += "\n"
       if not (i % 10): print(i)
   
     with open (dest.parent/fname, 'w') as fp: 
@@ -111,7 +117,7 @@ def get_one_clean_file(dest,lang, nohtml=True,past_preprocess=True):
     print(f"all texts from wikipedia {lang} in the file {dest.parent/fname}\n")
 
 
-def get_one_clean_csv_file(dest,lang, nohtml=True,past_preprocess=True):    
+def get_one_clean_csv_file(dest,lang, nohtml=True,do_strip=False, onebigfile=True):    
                          
     fname = f'all_texts_{lang}wiki.csv'
     doc_re = re.compile(rf'([\w\W]*)<\/doc>') # delete </doc>
@@ -124,16 +130,21 @@ def get_one_clean_csv_file(dest,lang, nohtml=True,past_preprocess=True):
       print("Reading {}".format(l) , flush=True) 
       # open file and get content without first line which is the title
       with open(l,'r+') as f:
-          for line in f.readlines():
-              text = line
-              # get content without </doc> and delete empty line and whitespaces at the head and tail
-              if not past_preprocess:
-                if nohtml:
-                    text = text.strip()
-                else:
-                    text = doc_re.findall(text)[0].strip()
-                # concatenate text
-              all_texts.append(text)
+          if onebigfile:
+            text = f.read()
+            text = text.strip() 
+            all_texts.append(text)
+          else:
+            for line in f.readlines():
+                text = line
+                # get content without </doc> and delete empty line and whitespaces at the head and tail
+                if do_strip:
+                  if nohtml:
+                      text = text.strip()
+                  else:
+                      text = doc_re.findall(text)[0].strip()
+                  # concatenate text
+                all_texts.append(text)
       if not (i % 10): print(i)
   
     # Create the pandas DataFrame 
