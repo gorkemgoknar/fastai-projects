@@ -78,7 +78,7 @@ def clean_files(dest):
         f.write(text)
         f.close()
         
-def get_one_clean_file(dest,lang, nohtml=True):
+def get_one_clean_file(dest,lang, nohtml=True,past_preprocess=True):
 
     fname = f'all_texts_{lang}wiki.txt'
     print("doing some regexp to demove wiki things" , flush=True)
@@ -95,10 +95,11 @@ def get_one_clean_file(dest,lang, nohtml=True):
           for line in f.readlines():
               text = line
               # get content without </doc> and delete empty line and whitespaces at the head and tail
-              if nohtml:
-                  text = text.strip()
-              else:
-                  text = doc_re.findall(text)[0].strip()
+              if not past_preprocess:
+                if nohtml:
+                    text = text.strip()
+                else:
+                    text = doc_re.findall(text)[0].strip()
               # concatenate text
               all_texts += text
               all_texts += "\n"
@@ -110,7 +111,7 @@ def get_one_clean_file(dest,lang, nohtml=True):
     print(f"all texts from wikipedia {lang} in the file {dest.parent/fname}\n")
 
 
-def get_one_clean_csv_file(dest,lang, nohtml=True):    
+def get_one_clean_csv_file(dest,lang, nohtml=True,past_preprocess=True):    
                          
     fname = f'all_texts_{lang}wiki.csv'
     doc_re = re.compile(rf'([\w\W]*)<\/doc>') # delete </doc>
@@ -126,11 +127,12 @@ def get_one_clean_csv_file(dest,lang, nohtml=True):
           for line in f.readlines():
               text = line
               # get content without </doc> and delete empty line and whitespaces at the head and tail
-              if nohtml:
-                  text = text.strip()
-              else:
-                  text = doc_re.findall(text)[0].strip()
-              # concatenate text
+              if not past_preprocess:
+                if nohtml:
+                    text = text.strip()
+                else:
+                    text = doc_re.findall(text)[0].strip()
+                # concatenate text
               all_texts.append(text)
       if not (i % 10): print(i)
   
