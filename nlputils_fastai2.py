@@ -4,7 +4,7 @@ from fastai.basics import *
 import re
 import pandas as pd
 
-
+print("Done import")
 def get_wiki(path,lang):
     name = f'{lang}wiki'
     if (path/name).exists():
@@ -78,44 +78,62 @@ def clean_files(dest):
         f.write(text)
         f.close()
         
-def get_one_clean_file(dest,lang):
+def get_one_clean_file(dest,lang, nohtml=True):
 
     fname = f'all_texts_{lang}wiki.txt'
+    print("doing some regexp to demove wiki things" , flush=True)
     doc_re = re.compile(rf'([\w\W]*)<\/doc>') # delete </doc>
     
     all_texts = ''
     for i,l in enumerate(dest.ls()):
+        if not str(l).endswith('.txt'):
+            continue 
+            
+        print("Reading {}".format(l) , flush=True) 
         # open file and get content without first line which is the title
-        f = l.open('r+', encoding="utf-8")
-        f.readline()
-        text = f.read()
-        f.close()
-        # get content without </doc> and delete empty line and whitespaces at the head and tail
-        text = doc_re.findall(text)[0].strip()
-        # concatenate text
-        all_texts += text
-        all_texts += "\n"
-        if not (i % 1000): print(i)
+        with open(l,'r+') as f:
+            for line in f.readlines():
+                text = line
+                # get content without </doc> and delete empty line and whitespaces at the head and tail
+                if nohtml:
+                    text = text.strip()
+                else:
+                    text = doc_re.findall(text)[0].strip()
+                # concatenate text
+                all_texts += text
+                all_texts += "\n"
+        if not (i % 10): print(i)
   
     with open (dest.parent/fname, 'w') as fp: 
+        print("Writing one big file")
         fp.write(all_texts)
     print(f"all texts from wikipedia {lang} in the file {dest.parent/fname}\n")
 
-def get_one_clean_csv_file(dest,lang):    
+
+def get_one_clean_csv_file(dest,lang, nohtml=True):    
                          
     fname = f'all_texts_{lang}wiki.csv'
     doc_re = re.compile(rf'([\w\W]*)<\/doc>') # delete </doc>
     
     all_texts = list()
     for i,l in enumerate(dest.ls()):
-        # open file and get content without first line which is the title
-        f = l.open('r+', encoding="utf-8")
-        f.readline()
-        text = f.read()
-        f.close()
-        # get content without </doc> and delete empty line and whitespaces at the head and tail
-        text = doc_re.findall(text)[0].strip()
-        # append text
+            if not str(l).endswith('.txt'):
+                continue 
+
+            print("Reading {}".format(l) , flush=True) 
+            # open file and get content without first line which is the title
+            with open(l,'r+') as f:
+                for line in f.readlines():
+                    text = line
+                    # get content without </doc> and delete empty line and whitespaces at the head and tail
+                    if nohtml:
+                        text = text.strip()
+                    else:
+                        text = doc_re.findall(text)[0].strip()
+                    # concatenate text
+                    all_texts.append(text)
+            if not (i % 10): print(i)
+
         all_texts.append(text)
   
     # Create the pandas DataFrame 
@@ -140,3 +158,4 @@ def get_num_tokens(dest):
     num_files = i+1
     
     return num_files, num_tokens
+
