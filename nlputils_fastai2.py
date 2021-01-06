@@ -3,8 +3,9 @@
 from fastai.basics import *
 import re
 import pandas as pd
+import os
 
-print("Done import")
+
 def get_wiki(path,lang):
     name = f'{lang}wiki'
     if (path/name).exists():
@@ -78,7 +79,7 @@ def clean_files(dest):
         f.write(text)
         f.close()
         
-def get_one_clean_file(dest,lang, nohtml=True,do_strip=False,onebigfile=False):
+def get_one_clean_file(dest,lang, nohtml=True,do_strip=False,onebigfile=True):
 
     fname = f'all_texts_{lang}wiki.txt'
     print("doing some regexp to demove wiki things" , flush=True)
@@ -153,7 +154,50 @@ def get_one_clean_csv_file(dest,lang, nohtml=True,do_strip=False, onebigfile=Tru
     # save
     df.to_csv(dest.parent/fname, index=False)  
     print(f"all texts from wikipedia {lang} in the file {dest.parent/fname}\n")
-                         
+
+
+def split_files(dest,remove_original=True):
+    for i,l in enumerate(dest.ls()):
+        if not str(l).endswith('.txt'):
+            continue 
+        
+        split_file_on_empty_lines(l, remove_original=remove_original)
+        
+def write_text_to_file(text,filename):
+    with open (filename, 'w') as fp: 
+        fp.write(text)
+     
+def split_file_on_empty_lines(filename, remove_original=False):
+    filename = str(filename)
+    print("processing: ", filename)
+    filename_no_suffix = os.path.splitext(filename)[0]
+    with open(filename,'r+') as f:
+        current_sub_file = 1
+        line_count = 0
+        agg_text = ''
+        for line in f.readlines():
+            line_count += 1
+            agg_text += line
+            #check if line empty 
+            if not line.strip():  #line in ['\n', '\r\n']
+                #Empty line
+                if line_count>2:
+                    #write as a new file,
+                    write_text_to_file(agg_text, filename_no_suffix+'_'+str(current_sub_file)+'.txt')
+                    current_sub_file += 1
+                    agg_text = ''
+                    
+            # concatenate text
+            agg_text += line
+        
+        write_text_to_file(agg_text, filename_no_suffix+'_'+str(current_sub_file)+'.txt')
+        
+        print("Subfile count:",current_sub_file)
+    if remove_original:
+        os.remove(filename)
+        print("original deleted")
+        
+        
 def get_num_tokens(dest):
     
     # Getting an idea of the number of words
@@ -169,4 +213,5 @@ def get_num_tokens(dest):
     num_files = i+1
     
     return num_files, num_tokens
+
 
